@@ -106,7 +106,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       return
     }
 
-    const nextStatuses = { ...countryStatuses, [selectedCountryId]: 'correct' satisfies CountryStatus }
+    const nextStatuses: Record<string, CountryStatus> = { ...countryStatuses, [selectedCountryId]: 'correct' }
     const isGameComplete = computeComplete(nextStatuses)
     set({
       countryStatuses: nextStatuses,
@@ -121,7 +121,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { selectedCountryId, countryStatuses } = get()
     if (!selectedCountryId || countryStatuses[selectedCountryId] !== 'unattempted') return
 
-    const nextStatuses = { ...countryStatuses, [selectedCountryId]: 'skipped' satisfies CountryStatus }
+    const nextStatuses: Record<string, CountryStatus> = { ...countryStatuses, [selectedCountryId]: 'skipped' }
     const isGameComplete = computeComplete(nextStatuses)
 
     set({
