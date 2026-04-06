@@ -1,11 +1,18 @@
 import { feature } from 'topojson-client'
-import countries110 from 'world-atlas/countries-110m.json'
+import countries50 from 'world-atlas/countries-50m.json'
+import countryNamesTsv from 'world-atlas/country-names.tsv?raw'
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson'
-import { COUNTRY_BY_ID } from '../data/countries'
+import { COUNTRY_ID_BY_NORMALIZED_NAME, GAME_COUNTRIES } from '../data/countries'
 
-export type CountryGeometryFeature = Feature<Polygon | MultiPolygon, { id: string }>
+export type CountryGeometryFeature = Feature<Polygon | MultiPolygon, { id: string; geometryName: string }>
 
 const RADIUS = 2
+
+const NAME_BY_NUMERIC_ID = new Map<string, string>()
+for (const line of countryNamesTsv.trim().split('\n').slice(1)) {
+  const [id, name] = line.split('\t')
+  if (id && name) NAME_BY_NUMERIC_ID.set(id.trim(), name.trim())
+}
 
 export function lonLatToVector3(lon: number, lat: number, radius = RADIUS) {
   const phi = ((90 - lat) * Math.PI) / 180
@@ -18,22 +25,54 @@ export function lonLatToVector3(lon: number, lat: number, radius = RADIUS) {
   }
 }
 
-function normalizeId(id: string | number): string {
-  return String(Number(id))
+function normalizeCountryName(value: string): string {
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim()
 }
+
+function readFeatureName(item: Feature<Polygon | MultiPolygon, Record<string, unknown>>): string {
+  const candidates = ['name', 'NAME', 'admin', 'ADMIN', 'sovereignt', 'SOVEREIGNT', 'geounit', 'GEOUNIT']
+  for (const key of candidates) {
+    const value = item.properties?.[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  const numericId = item.id !== undefined ? String(item.id) : ''
+  return NAME_BY_NUMERIC_ID.get(numericId) ?? ''
+}
+
+let hasLoggedValidation = false
 
 export function getGameCountryFeatures(): CountryGeometryFeature[] {
   const fc = feature(
-    countries110 as never,
-    (countries110 as any).objects.countries
-  ) as FeatureCollection<Polygon | MultiPolygon, { name: string }>
+    countries50 as never,
+    (countries50 as any).objects.countries
+  ) as FeatureCollection<Polygon | MultiPolygon, Record<string, unknown>>
 
-  return fc.features
-    .filter((item) => item.id !== undefined && COUNTRY_BY_ID.has(normalizeId(item.id as string | number)))
-    .map((item) => ({
-      ...item,
-      properties: { id: normalizeId(item.id as string | number) }
-    }))
+  const mapped = fc.features
+    .map((item) => {
+      const geometryName = readFeatureName(item)
+      const id = COUNTRY_ID_BY_NORMALIZED_NAME.get(normalizeCountryName(geometryName))
+      if (!id) return null
+      return {
+        ...item,
+        properties: { id, geometryName }
+      }
+    })
+    .filter((item): item is CountryGeometryFeature => Boolean(item))
+
+  if (!hasLoggedValidation) {
+    hasLoggedValidation = true
+    const mappedIds = new Set(mapped.map((featureItem) => featureItem.properties.id))
+    const missingCountries = GAME_COUNTRIES.filter((country) => !mappedIds.has(country.id)).map((country) => country.displayName)
+    console.info(
+      `[geo] raw features=${fc.features.length}, mapped features=${mapped.length}, playable countries mapped=${mappedIds.size}/${GAME_COUNTRIES.length}`
+    )
+    if (missingCountries.length > 0) {
+      console.warn(`[geo] missing geometry mapping for ${missingCountries.length} playable countries`, missingCountries)
+    }
+  }
+
+  return mapped
 }
 
 export function getPolygonRings(featureItem: CountryGeometryFeature): number[][][] {

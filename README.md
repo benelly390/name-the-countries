@@ -33,62 +33,16 @@ A complete React + TypeScript + Vite web app for a 3D country-guessing game insp
 - localStorage persistence with versioning + stale state reset handling.
 - Dedicated normalization + validation modules and unit tests.
 
-## Data scope and deterministic total
+## Country data pipeline (195-country target)
 
-The game uses a curated, explicit playable list in `src/data/countries.ts` with a deterministic total count.
+- **Curated playable list:** `src/data/countries.ts` now defines a UN-style 195-country set (193 UN members + Palestine + Vatican City).
+- **Geometry source:** `world-atlas/countries-50m.json` is used for improved country boundary detail and multipolygon support.
+- **Mapping strategy:** Geometry features are matched to the curated game list via normalized country names and alias fallbacks.
+- **Validation logging:** On load, `src/lib/geo.ts` logs raw feature count, mapped feature count, and playable-mapped count so you can verify coverage quickly.
 
-Each entry uses:
+### Why only 36 countries appeared before
 
-```ts
-{
-  id: string,
-  displayName: string,
-  acceptedAnswers: string[],
-  rejectedCommonAmbiguities: string[]
-}
-```
-
-## Alias and ambiguity policy implemented
-
-Includes explicit curated coverage for:
-
-- South Korea / Republic of Korea
-- North Korea / Democratic People's Republic of Korea
-- United States / USA / US / United States of America
-- United Kingdom / UK / Britain
-- Russia / Russian Federation
-- Czechia / Czech Republic
-- United Arab Emirates / UAE
-- Democratic Republic of the Congo / DRC / Congo-Kinshasa
-- Republic of the Congo / Congo-Brazzaville
-
-With explicit ambiguity rejection examples (e.g. `Korea`, `SK`, `Congo` rejected in relevant contexts).
-
-## Project structure
-
-```text
-src/
-  components/
-    GlobeCanvas.tsx
-    HUD.tsx
-    AnswerPanel.tsx
-    FinalResults.tsx
-  data/
-    countries.ts
-  lib/
-    normalizeAnswer.ts
-    validateAnswer.ts
-    storage.ts
-    geo.ts
-    answerValidation.test.ts
-  state/
-    gameStore.ts
-  types/
-    country.ts
-    game.ts
-  App.tsx
-  main.tsx
-```
+The old pipeline filtered geometry by `COUNTRY_BY_ID`, but that map only contained 36 hard-coded entries in `GAME_COUNTRIES`, so only those 36 countries could render or be played.
 
 ## Setup and run
 
