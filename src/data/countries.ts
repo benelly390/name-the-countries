@@ -1,0 +1,42 @@
+import type { CountryDefinition } from '../types/country'
+
+export const GAME_COUNTRIES: CountryDefinition[] = [
+  { id: '840', displayName: 'United States', acceptedAnswers: ['united states', 'usa', 'us', 'united states of america'], rejectedCommonAmbiguities: ['america'] },
+  { id: '826', displayName: 'United Kingdom', acceptedAnswers: ['united kingdom', 'uk', 'britain', 'great britain'], rejectedCommonAmbiguities: ['england'] },
+  { id: '410', displayName: 'South Korea', acceptedAnswers: ['south korea', 'republic of korea'], rejectedCommonAmbiguities: ['korea', 'sk'] },
+  { id: '408', displayName: 'North Korea', acceptedAnswers: ['north korea', "democratic people's republic of korea", 'dprk'], rejectedCommonAmbiguities: ['korea', 'nk'] },
+  { id: '643', displayName: 'Russia', acceptedAnswers: ['russia', 'russian federation'], rejectedCommonAmbiguities: [] },
+  { id: '203', displayName: 'Czechia', acceptedAnswers: ['czechia', 'czech republic'], rejectedCommonAmbiguities: [] },
+  { id: '784', displayName: 'United Arab Emirates', acceptedAnswers: ['united arab emirates', 'uae'], rejectedCommonAmbiguities: [] },
+  { id: '180', displayName: 'Democratic Republic of the Congo', acceptedAnswers: ['democratic republic of the congo', 'drc', 'congo kinshasa', 'dr congo'], rejectedCommonAmbiguities: ['congo'] },
+  { id: '178', displayName: 'Republic of the Congo', acceptedAnswers: ['republic of the congo', 'congo brazzaville'], rejectedCommonAmbiguities: ['congo'] },
+  { id: '250', displayName: 'France', acceptedAnswers: ['france'], rejectedCommonAmbiguities: [] },
+  { id: '276', displayName: 'Germany', acceptedAnswers: ['germany'], rejectedCommonAmbiguities: [] },
+  { id: '724', displayName: 'Spain', acceptedAnswers: ['spain'], rejectedCommonAmbiguities: [] },
+  { id: '380', displayName: 'Italy', acceptedAnswers: ['italy'], rejectedCommonAmbiguities: [] },
+  { id: '392', displayName: 'Japan', acceptedAnswers: ['japan'], rejectedCommonAmbiguities: [] },
+  { id: '156', displayName: 'China', acceptedAnswers: ['china', "people's republic of china", 'pr china'], rejectedCommonAmbiguities: ['prc'] },
+  { id: '356', displayName: 'India', acceptedAnswers: ['india'], rejectedCommonAmbiguities: [] },
+  { id: '076', displayName: 'Brazil', acceptedAnswers: ['brazil'], rejectedCommonAmbiguities: [] },
+  { id: '032', displayName: 'Argentina', acceptedAnswers: ['argentina'], rejectedCommonAmbiguities: [] },
+  { id: '124', displayName: 'Canada', acceptedAnswers: ['canada'], rejectedCommonAmbiguities: [] },
+  { id: '484', displayName: 'Mexico', acceptedAnswers: ['mexico'], rejectedCommonAmbiguities: [] },
+  { id: '036', displayName: 'Australia', acceptedAnswers: ['australia'], rejectedCommonAmbiguities: [] },
+  { id: '554', displayName: 'New Zealand', acceptedAnswers: ['new zealand'], rejectedCommonAmbiguities: [] },
+  { id: '710', displayName: 'South Africa', acceptedAnswers: ['south africa'], rejectedCommonAmbiguities: ['sa'] },
+  { id: '818', displayName: 'Egypt', acceptedAnswers: ['egypt'], rejectedCommonAmbiguities: [] },
+  { id: '682', displayName: 'Saudi Arabia', acceptedAnswers: ['saudi arabia'], rejectedCommonAmbiguities: ['sa'] },
+  { id: '792', displayName: 'Turkey', acceptedAnswers: ['turkey', 'turkiye'], rejectedCommonAmbiguities: [] },
+  { id: '578', displayName: 'Norway', acceptedAnswers: ['norway'], rejectedCommonAmbiguities: [] },
+  { id: '752', displayName: 'Sweden', acceptedAnswers: ['sweden'], rejectedCommonAmbiguities: [] },
+  { id: '246', displayName: 'Finland', acceptedAnswers: ['finland'], rejectedCommonAmbiguities: [] },
+  { id: '352', displayName: 'Iceland', acceptedAnswers: ['iceland'], rejectedCommonAmbiguities: [] },
+  { id: '360', displayName: 'Indonesia', acceptedAnswers: ['indonesia'], rejectedCommonAmbiguities: [] },
+  { id: '608', displayName: 'Philippines', acceptedAnswers: ['philippines', 'the philippines'], rejectedCommonAmbiguities: [] },
+  { id: '704', displayName: 'Vietnam', acceptedAnswers: ['vietnam', 'viet nam'], rejectedCommonAmbiguities: [] },
+  { id: '764', displayName: 'Thailand', acceptedAnswers: ['thailand'], rejectedCommonAmbiguities: [] },
+  { id: '616', displayName: 'Poland', acceptedAnswers: ['poland'], rejectedCommonAmbiguities: [] },
+  { id: '804', displayName: 'Ukraine', acceptedAnswers: ['ukraine'], rejectedCommonAmbiguities: [] }
+]
+
+export const COUNTRY_BY_ID = new Map(GAME_COUNTRIES.map((country) => [String(Number(country.id)), country]))
