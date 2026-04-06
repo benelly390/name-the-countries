@@ -8,7 +8,7 @@ const aliasToCountryIds = new Map<string, Set<string>>()
 const normalizedCountries = new Map<string, { accepted: Set<string>; rejected: Set<string> }>()
 
 for (const country of GAME_COUNTRIES) {
-  const id = String(Number(country.id))
+  const id = country.id
   const accepted = new Set(country.acceptedAnswers.map((a) => normalizeAnswer(a)))
   const rejected = new Set(country.rejectedCommonAmbiguities.map((a) => normalizeAnswer(a)))
   normalizedCountries.set(id, { accepted, rejected })
@@ -43,7 +43,7 @@ export function validateAnswer(rawInput: string, country: CountryDefinition): Va
     return { ok: false, normalizedInput, reason: 'incorrect' }
   }
 
-  const normalizedCountry = normalizedCountries.get(String(Number(country.id)))
+  const normalizedCountry = normalizedCountries.get(country.id)
   if (!normalizedCountry) {
     return { ok: false, normalizedInput, reason: 'incorrect' }
   }

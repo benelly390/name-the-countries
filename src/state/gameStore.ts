@@ -24,7 +24,7 @@ type GameState = {
 }
 
 const initialStatuses = (): Record<string, CountryStatus> =>
-  Object.fromEntries(GAME_COUNTRIES.map((country) => [String(Number(country.id)), 'unattempted' satisfies CountryStatus]))
+  Object.fromEntries(GAME_COUNTRIES.map((country) => [country.id, 'unattempted' satisfies CountryStatus]))
 
 function computeComplete(statuses: Record<string, CountryStatus>) {
   return Object.values(statuses).every((value) => value !== 'unattempted')
@@ -150,5 +150,5 @@ export const gameSelectors = {
   attempted: (statuses: Record<string, CountryStatus>) => Object.values(statuses).filter((status) => status !== 'unattempted').length,
   correct: (statuses: Record<string, CountryStatus>) => Object.values(statuses).filter((status) => status === 'correct').length,
   skippedCountries: (statuses: Record<string, CountryStatus>) =>
-    GAME_COUNTRIES.filter((country) => statuses[String(Number(country.id))] !== 'correct').map((country) => country.displayName)
+    GAME_COUNTRIES.filter((country) => statuses[country.id] !== 'correct').map((country) => country.displayName)
 }

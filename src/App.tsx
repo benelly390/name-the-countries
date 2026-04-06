@@ -24,7 +24,7 @@ export default function App() {
   const attempted = Object.values(countryStatuses).filter((status) => status !== 'unattempted').length
   const correct = Object.values(countryStatuses).filter((status) => status === 'correct').length
   const skipped = attempted - correct
-  const missed = GAME_COUNTRIES.filter((country) => countryStatuses[String(Number(country.id))] !== 'correct').map((country) => country.displayName)
+  const missed = GAME_COUNTRIES.filter((country) => countryStatuses[country.id] !== 'correct').map((country) => country.displayName)
 
   return (
     <main className="app-shell">

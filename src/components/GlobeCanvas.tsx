@@ -13,12 +13,12 @@ type GlobeCanvasProps = {
 }
 
 const COLORS = {
-  unattempted: '#4b5d67',
+  unattempted: '#6b7f8e',
   correct: '#2e9d55',
   skipped: '#bf3f3f',
-  hovered: '#6f8190',
-  selected: '#34424a',
-  ocean: '#0f172a'
+  hovered: '#90a5b3',
+  selected: '#4f6270',
+  ocean: '#cfe2f4'
 }
 
 function CountryShape({
@@ -131,13 +131,13 @@ export default function GlobeCanvas({ statuses, selectedCountryId, onSelectCount
   }, [features])
 
   return (
-    <Canvas camera={{ position: [0, 0, 5.3], fov: 45 }}>
+    <Canvas camera={{ position: [0, 0, 4.6], fov: 38 }}>
       <color attach="background" args={[COLORS.ocean]} />
-      <ambientLight intensity={0.75} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
+      <ambientLight intensity={0.95} />
+      <directionalLight position={[6, 6, 5]} intensity={1.15} />
       <mesh>
         <sphereGeometry args={[2, 64, 64]} />
-        <meshStandardMaterial color="#11253f" roughness={0.95} metalness={0.02} />
+        <meshStandardMaterial color="#b9d5ef" roughness={0.95} metalness={0.02} />
       </mesh>
 
       {features.map((feature) => {
@@ -176,7 +176,7 @@ export default function GlobeCanvas({ statuses, selectedCountryId, onSelectCount
       })}
 
       <TinyCountryHotspots tiny={tinyHotspots} statuses={statuses} selectedCountryId={selectedCountryId} onSelect={onSelectCountry} />
-      <OrbitControls enablePan={false} minDistance={3.2} maxDistance={8} />
+      <OrbitControls enablePan={false} minDistance={2.8} maxDistance={7.5} />
     </Canvas>
   )
 }
