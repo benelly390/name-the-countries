@@ -3,7 +3,7 @@ import { OrbitControls } from '@react-three/drei'
 import { useMemo, useState } from 'react'
 import * as THREE from 'three'
 import { COUNTRY_BY_ID } from '../data/countries'
-import { approximateLonLatArea, getFeaturePolygons, getGameCountryFeatures, lonLatToVector3 } from '../lib/geo'
+import { approximateLonLatArea, buildSphericalPolygonGeometry, getFeaturePolygons, getGameCountryFeatures, lonLatToVector3 } from '../lib/geo'
 import type { CountryStatus } from '../types/country'
 
 type GlobeCanvasProps = {
@@ -37,41 +37,9 @@ function CountryShape({
   onSelect: (id: string) => void
 }) {
   const geometries = useMemo(() => {
-    // Build each GeoJSON polygon part as one Shape with explicit holes.
-    // Triangulating disconnected rings independently causes missing/incorrect fills on complex countries.
-    return polygons.map(({ outer, holes }) => {
-      const shape = new THREE.Shape()
-      outer.forEach(([lon, lat], idx) => {
-        if (idx === 0) {
-          shape.moveTo(lon, lat)
-        } else {
-          shape.lineTo(lon, lat)
-        }
-      })
-
-      holes.forEach((ring) => {
-        const hole = new THREE.Path()
-        ring.forEach(([lon, lat], idx) => {
-          if (idx === 0) {
-            hole.moveTo(lon, lat)
-          } else {
-            hole.lineTo(lon, lat)
-          }
-        })
-        shape.holes.push(hole)
-      })
-
-      const geo = new THREE.ShapeGeometry(shape)
-      const pos = geo.attributes.position
-      for (let i = 0; i < pos.count; i += 1) {
-        const lon = pos.getX(i)
-        const lat = pos.getY(i)
-        const sphere = lonLatToVector3(lon, lat, selected ? 2.05 : 2.01)
-        pos.setXYZ(i, sphere.x, sphere.y, sphere.z)
-      }
-      geo.computeVertexNormals()
-      return geo
-    })
+    return polygons
+      .map((polygon) => buildSphericalPolygonGeometry(polygon, selected ? 2.05 : 2.01))
+      .filter((geometry): geometry is THREE.BufferGeometry => Boolean(geometry))
   }, [polygons, selected])
 
   const color = selected
