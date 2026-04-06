@@ -4,6 +4,7 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson'
 import { COUNTRY_ID_BY_NORMALIZED_NAME, GAME_COUNTRIES } from '../data/countries'
 
 export type CountryGeometryFeature = Feature<Polygon | MultiPolygon, { id: string; geometryName: string }>
+export type CountryPolygonRings = { outer: number[][]; holes: number[][][] }
 
 const RADIUS = 2
 
@@ -55,6 +56,12 @@ export function getGameCountryFeatures(): CountryGeometryFeature[] {
 
   if (!hasLoggedValidation) {
     hasLoggedValidation = true
+    const polygonFeatureCount = mapped.filter((item) => item.geometry.type === 'Polygon').length
+    const multiPolygonFeatureCount = mapped.length - polygonFeatureCount
+    const polygonParts = mapped.flatMap(getFeaturePolygons)
+    const holeRingCount = polygonParts.reduce((sum, polygon) => sum + polygon.holes.length, 0)
+    const invalidPolygons = polygonParts.filter((polygon) => polygon.outer.length < 3 || approximateLonLatArea(polygon.outer) === 0)
+
     const featuresWithName = fc.features.filter((featureItem) => Boolean(readFeatureName(featureItem))).length
     const sampleUnmappedByNumericId = fc.features
       .map((featureItem) => {
@@ -69,8 +76,11 @@ export function getGameCountryFeatures(): CountryGeometryFeature[] {
     const mappedIds = new Set(mapped.map((featureItem) => featureItem.properties.id))
     const missingCountries = GAME_COUNTRIES.filter((country) => !mappedIds.has(country.id)).map((country) => country.displayName)
     console.info(
-      `[geo] raw features=${fc.features.length}, features with names=${featuresWithName}, mapped features=${mapped.length}, mapping key=normalized geometry properties.name -> game country id, playable countries mapped=${mappedIds.size}/${GAME_COUNTRIES.length}`
+      `[geo] raw features=${fc.features.length}, features with names=${featuresWithName}, mapped features=${mapped.length}, polygons=${polygonFeatureCount}, multipolygons=${multiPolygonFeatureCount}, polygon parts=${polygonParts.length}, hole rings=${holeRingCount}`
     )
+    if (invalidPolygons.length > 0) {
+      console.warn(`[geo] invalid polygon rings=${invalidPolygons.length}`, invalidPolygons.slice(0, 5))
+    }
     if (sampleUnmappedByNumericId.length > 0) {
       console.info('[geo] sample unmapped geometry entries (numeric-id:name)', sampleUnmappedByNumericId)
     }
@@ -82,12 +92,18 @@ export function getGameCountryFeatures(): CountryGeometryFeature[] {
   return mapped
 }
 
-export function getPolygonRings(featureItem: CountryGeometryFeature): number[][][] {
+export function getFeaturePolygons(featureItem: CountryGeometryFeature): CountryPolygonRings[] {
   if (featureItem.geometry.type === 'Polygon') {
-    return featureItem.geometry.coordinates as number[][][]
+    const [outer, ...holes] = featureItem.geometry.coordinates as number[][][]
+    return outer ? [{ outer, holes }] : []
   }
 
-  return (featureItem.geometry.coordinates as number[][][][]).flat()
+  return (featureItem.geometry.coordinates as number[][][][])
+    .map(([outer, ...holes]) => {
+      if (!outer) return null
+      return { outer, holes }
+    })
+    .filter((item): item is CountryPolygonRings => Boolean(item))
 }
 
 export function approximateLonLatArea(ring: number[][]): number {

@@ -3,7 +3,7 @@ import { OrbitControls } from '@react-three/drei'
 import { useMemo, useState } from 'react'
 import * as THREE from 'three'
 import { COUNTRY_BY_ID } from '../data/countries'
-import { approximateLonLatArea, getGameCountryFeatures, getPolygonRings, lonLatToVector3 } from '../lib/geo'
+import { approximateLonLatArea, getFeaturePolygons, getGameCountryFeatures, lonLatToVector3 } from '../lib/geo'
 import type { CountryStatus } from '../types/country'
 
 type GlobeCanvasProps = {
@@ -13,39 +13,54 @@ type GlobeCanvasProps = {
 }
 
 const COLORS = {
-  unattempted: '#6b7f8e',
-  correct: '#2e9d55',
-  skipped: '#bf3f3f',
-  hovered: '#90a5b3',
-  selected: '#4f6270',
-  ocean: '#cfe2f4'
+  unattempted: '#f2df9b',
+  correct: '#3f9b50',
+  skipped: '#bf4a4a',
+  hovered: '#f8e9b6',
+  selected: '#d7bf74',
+  ocean: '#0d2b52'
 }
 
 function CountryShape({
   id,
-  rings,
+  polygons,
   status,
   hovered,
   selected,
   onSelect
 }: {
   id: string
-  rings: number[][][]
+  polygons: { outer: number[][]; holes: number[][][] }[]
   status: CountryStatus
   hovered: boolean
   selected: boolean
   onSelect: (id: string) => void
 }) {
   const geometries = useMemo(() => {
-    return rings.map((ring) => {
+    // Build each GeoJSON polygon part as one Shape with explicit holes.
+    // Triangulating disconnected rings independently causes missing/incorrect fills on complex countries.
+    return polygons.map(({ outer, holes }) => {
       const shape = new THREE.Shape()
-      ring.forEach(([lon, lat], idx) => {
+      outer.forEach(([lon, lat], idx) => {
         if (idx === 0) {
           shape.moveTo(lon, lat)
         } else {
           shape.lineTo(lon, lat)
         }
       })
+
+      holes.forEach((ring) => {
+        const hole = new THREE.Path()
+        ring.forEach(([lon, lat], idx) => {
+          if (idx === 0) {
+            hole.moveTo(lon, lat)
+          } else {
+            hole.lineTo(lon, lat)
+          }
+        })
+        shape.holes.push(hole)
+      })
+
       const geo = new THREE.ShapeGeometry(shape)
       const pos = geo.attributes.position
       for (let i = 0; i < pos.count; i += 1) {
@@ -57,7 +72,7 @@ function CountryShape({
       geo.computeVertexNormals()
       return geo
     })
-  }, [rings, selected])
+  }, [polygons, selected])
 
   const color = selected
     ? COLORS.selected
@@ -91,8 +106,8 @@ function TinyCountryHotspots({
     <group>
       {tiny.map(({ id, point }) => {
         const status = statuses[id]
-        const baseColor = status === 'correct' ? COLORS.correct : status === 'skipped' ? COLORS.skipped : '#8aa1b1'
-        const color = id === selectedCountryId ? '#c5d6df' : baseColor
+        const baseColor = status === 'correct' ? COLORS.correct : status === 'skipped' ? COLORS.skipped : '#e5cf88'
+        const color = id === selectedCountryId ? '#f6ebc6' : baseColor
         return (
           <mesh key={`hotspot-${id}`} position={point} onClick={() => onSelect(id)}>
             <sphereGeometry args={[0.03, 8, 8]} />
@@ -113,8 +128,12 @@ export default function GlobeCanvas({ statuses, selectedCountryId, onSelectCount
     return features
       .map((feature) => {
         const id = feature.properties.id
-        const rings = getPolygonRings(feature)
-        const largestRing = rings.reduce((acc, ring) => (approximateLonLatArea(ring) > approximateLonLatArea(acc) ? ring : acc), rings[0])
+        const polygons = getFeaturePolygons(feature)
+        if (polygons.length === 0) return null
+
+        const largestRing = polygons
+          .map((polygon) => polygon.outer)
+          .reduce((acc, ring) => (approximateLonLatArea(ring) > approximateLonLatArea(acc) ? ring : acc), polygons[0].outer)
         const area = approximateLonLatArea(largestRing)
         if (area > 20) return null
 
@@ -137,7 +156,7 @@ export default function GlobeCanvas({ statuses, selectedCountryId, onSelectCount
       <directionalLight position={[6, 6, 5]} intensity={1.15} />
       <mesh>
         <sphereGeometry args={[2, 64, 64]} />
-        <meshStandardMaterial color="#b9d5ef" roughness={0.95} metalness={0.02} />
+        <meshStandardMaterial color={COLORS.ocean} roughness={0.95} metalness={0.02} />
       </mesh>
 
       {features.map((feature) => {
@@ -165,7 +184,7 @@ export default function GlobeCanvas({ statuses, selectedCountryId, onSelectCount
           >
             <CountryShape
               id={id}
-              rings={getPolygonRings(feature)}
+              polygons={getFeaturePolygons(feature)}
               status={status}
               hovered={hoveredCountryId === id}
               selected={selectedCountryId === id}
